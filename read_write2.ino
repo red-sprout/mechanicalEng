@@ -76,7 +76,6 @@ void setup(){
   Print_Task.setId(20);
   Print_Priority.setHighPriorityScheduler(&Control_Priority);
   Print_Priority.enableAll(true);
-  
 }
 
 
