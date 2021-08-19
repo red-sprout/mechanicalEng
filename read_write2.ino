@@ -64,7 +64,6 @@ void fPrint(){
 }
 
 void setup(){
- 
 
   pinMode(BOARD_BUTTON_PIN, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(BOARD_BUTTON_PIN),btn_IQR,RISING);
@@ -77,12 +76,6 @@ void setup(){
   Print_Task.setId(20);
   Print_Priority.setHighPriorityScheduler(&Control_Priority);
   Print_Priority.enableAll(true);
-
-
-
-
-
-
   
 }
 
