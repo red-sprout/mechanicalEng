@@ -59,7 +59,9 @@ void fPrint(){
   if (Serial.available() > 0) {
     // read the incoming byte:
     incomingByte = Serial.parseInt();
-    Serial.println(incomingByte);
+    if (incomingByte > 0) {
+      Serial.println(incomingByte);
+    }
   }
 }
 
