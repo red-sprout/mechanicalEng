@@ -48,26 +48,21 @@ int btn_value=0;
 bool new_value_check;
 void btn_IQR(){btn_value+=(digitalRead(BOARD_BUTTON_PIN)==HIGH)?10:-10;
       new_value_check = true;
-  }
+}
 
 Task Control_Task(10, TASK_FOREVER, &fControl, &Control_Priority);
 Task Print_Task(100, TASK_FOREVER, &fPrint, &Print_Priority);
 
 void fControl(){
-      if(new_value_check){
-        
-      }
-      new_value_check = false;
-    
-  }
- void fPrint()
-{
+  if(new_value_check);
+  new_value_check = false;
+}
+
+ void fPrint(){
   Serial.println(btn_value);
-  
 }
 
 void setup(){
-
   pinMode(BOARD_BUTTON_PIN, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(BOARD_BUTTON_PIN),btn_IQR,RISING);
   pinMode(BOARD_BUTTON_PIN2, INPUT_PULLDOWN);
@@ -79,7 +74,6 @@ void setup(){
   Print_Task.setId(20);
   Print_Priority.setHighPriorityScheduler(&Control_Priority);
   Print_Priority.enableAll(true);
-
 }
 
 
