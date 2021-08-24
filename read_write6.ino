@@ -15,7 +15,6 @@
 Scheduler Print_Priority;
 Scheduler Control_Priority;
 
-
 #define BOARD_BUTTON_PIN                16
 #define BOARD_BUTTON_PIN2               17
 
@@ -60,29 +59,23 @@ int dxl_comm_result = COMM_TX_FAIL;             // Communication result
 int dxl_goal_position[2] = {DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE};         // Goal position
 int dxl_goal_current = DXL_MAXIMUM_CURRENT_VALUE;
 int target_position = 0;
-int target_current = 0;
+int target_current = 40;
 char input_character;
 int i = 0;
 
 bool new_value_check;
 bool new_value_check2;
-int change_value = 20;
-
-//void btn_IQR(){target_position+=(digitalRead(BOARD_BUTTON_PIN)==HIGH)?20:-20;  
-//  if(target_position<0)target_position=0;
-//  
-//  new_value_check = true;
-//}
+int change_value = 40;
 
 // PIN 16: position control
-void btn_IQR(){target_position+=(digitalRead(BOARD_BUTTON_PIN)==HIGH)?change_value:-change_value;  
+void btn_IQR(){target_position+=(digitalRead(BOARD_BUTTON_PIN)==HIGH)?change_value:0;  
   if(target_position<0)target_position=0;
   
   new_value_check = true;
 }
 
 // PIN 17: current control
-void btn_IQR2(){target_current+=(digitalRead(BOARD_BUTTON_PIN)==HIGH)?change_value:-change_value;  
+void btn_IQR2(){target_current+=(digitalRead(BOARD_BUTTON_PIN2)==HIGH)?change_value:0;  
   if(target_current<0)target_current=0;
   
   new_value_check2 = true;
@@ -90,6 +83,7 @@ void btn_IQR2(){target_current+=(digitalRead(BOARD_BUTTON_PIN)==HIGH)?change_val
 
 Task Control_Task(1000, TASK_FOREVER, &fControl, &Control_Priority);
 Task Print_Task(100, TASK_FOREVER, &fPrint, &Print_Priority);
+
 int toggle = -1;
 
 void fControl(){
@@ -106,8 +100,6 @@ void fPrint(){
   Serial.print("\tcurrent : ");
   Serial.print(target_current);
   Serial.println("\n");
-  
-
 }
 
 void setup(){
@@ -156,23 +148,19 @@ void setup(){
 
 
   dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_ENABLE, &dxl_error);
-  if (dxl_comm_result != COMM_SUCCESS)
-  {
+  if (dxl_comm_result != COMM_SUCCESS){
     packetHandler->getTxRxResult(dxl_comm_result);
   }
-  else if (dxl_error != 0)
-  {
+  else if (dxl_error != 0){
     packetHandler->getRxPacketError(dxl_error);
   }
 
   
   dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, DXL_ID, 11, 5, &dxl_error);
-  if (dxl_comm_result != COMM_SUCCESS)
-  {
+  if (dxl_comm_result != COMM_SUCCESS){
     packetHandler->getTxRxResult(dxl_comm_result);
   }
-  else if (dxl_error != 0)
-  {
+  else if (dxl_error != 0){
     packetHandler->getRxPacketError(dxl_error);
   }
 
@@ -181,42 +169,34 @@ void setup(){
 
  // Change Position P gain
   dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, DXL_ID, 84, 6000, &dxl_error);
-  if (dxl_comm_result != COMM_SUCCESS)
-  {
+  if (dxl_comm_result != COMM_SUCCESS){
     packetHandler->getTxRxResult(dxl_comm_result);
   }
-  else if (dxl_error != 0)
-  {
+  else if (dxl_error != 0){
     packetHandler->getRxPacketError(dxl_error);
   }
-  else
-  {
+  else{
     Serial.print("Change P gain \n");
   }
   
- //GOAL_CURRENT
-    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_CURRENT, target_position, &dxl_error);
-    if (dxl_comm_result != COMM_SUCCESS)
-    {
-      packetHandler->getTxRxResult(dxl_comm_result);
-    }
-    else if (dxl_error != 0)
-    {
-      packetHandler->getRxPacketError(dxl_error);
-    }
+  //GOAL_CURRENT
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_CURRENT, target_current, &dxl_error);
+  if (dxl_comm_result != COMM_SUCCESS){
+    packetHandler->getTxRxResult(dxl_comm_result);
+  }
+  else if (dxl_error != 0){
+    packetHandler->getRxPacketError(dxl_error);
+  }
 
-    //GOAL_POSITION
-    dxl_comm_result = packetHandler->write4ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_POSITION, target_position, &dxl_error);
-    if (dxl_comm_result != COMM_SUCCESS)
-    {
-      packetHandler->getTxRxResult(dxl_comm_result);
-    }
-    else if (dxl_error != 0)
-    {
-      packetHandler->getRxPacketError(dxl_error);
-    }
+  //GOAL_POSITION
+  dxl_comm_result = packetHandler->write4ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_POSITION, target_position, &dxl_error);
+  if (dxl_comm_result != COMM_SUCCESS){
+    packetHandler->getTxRxResult(dxl_comm_result);
+  }
+  else if (dxl_error != 0){
+    packetHandler->getRxPacketError(dxl_error);
+  }
 
-  // Close port
   Control_Task.setId(10);
   Print_Task.setId(20);
   Print_Priority.setHighPriorityScheduler(&Control_Priority);
@@ -227,25 +207,20 @@ void setup(){
 
 void loop() {
   Print_Priority.execute();
-    if(new_value_check){
-      dxl_comm_result = packetHandler->write4ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_POSITION, target_position, &dxl_error);
-    }
-    if(new_value_check2){
-      dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_CURRENT, target_current, &dxl_error);
-    }
+  if(new_value_check){
+    dxl_comm_result = packetHandler->write4ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_POSITION, target_position, &dxl_error);
     if (dxl_comm_result != COMM_SUCCESS){
       packetHandler->getTxRxResult(dxl_comm_result);
     }
     else if (dxl_error != 0){
       packetHandler->getRxPacketError(dxl_error);
     }
-    
     do{
       // Read present position
       dxl_comm_result = packetHandler->read2ByteTxRx(portHandler, DXL_ID, ADDR_PRO_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
-//      Serial.print(target_position);
-//      Serial.print(", present :  ");
-//      Serial.println(dxl_present_position);
+      Serial.print(target_position);
+      Serial.print(", present :  ");
+      Serial.println(dxl_present_position);
       if (dxl_comm_result != COMM_SUCCESS){
         packetHandler->getTxRxResult(dxl_comm_result);
       }
@@ -253,86 +228,17 @@ void loop() {
         packetHandler->getRxPacketError(dxl_error);
       }
     }while((abs(target_position - dxl_present_position) > DXL_MOVING_STATUS_THRESHOLD));
-    new_value_check=false;
-    new_value_check2=false; 
-  }
-
+  }  
+  new_value_check=false;
   
-//  while(1)
-//  {
-//    Serial.print("Press any key to continue! (or press q to quit!)\n");
-//
-//
-//    while(Serial.available()==0);
-//
-//    int ch;
-//
-//    ch = Serial.read();
-//    if (ch == 'q')
-//      break;
-
-    // Write goal position
-//    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_CURRENT, 1, &dxl_error);
-//    if (dxl_comm_result != COMM_SUCCESS)
-//    {
-//      packetHandler->getTxRxResult(dxl_comm_result);
-//    }
-//    else if (dxl_error != 0)
-//    {
-//      packetHandler->getRxPacketError(dxl_error);
-//    }
-//    dxl_comm_result = packetHandler->write4ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_POSITION, dxl_goal_position[i], &dxl_error);
-//    if (dxl_comm_result != COMM_SUCCESS)
-//    {
-//      packetHandler->getTxRxResult(dxl_comm_result);
-//    }
-//    else if (dxl_error != 0)
-//    {
-//      packetHandler->getRxPacketError(dxl_error);
-//    }
-
-//    do
-//    {
-//      // Read present position
-//      dxl_comm_result = packetHandler->read2ByteTxRx(portHandler, DXL_ID, ADDR_PRO_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
-//      if (dxl_comm_result != COMM_SUCCESS)
-//      {
-//        packetHandler->getTxRxResult(dxl_comm_result);
-//      }
-//      else if (dxl_error != 0)
-//      {
-//        packetHandler->getRxPacketError(dxl_error);
-//      }
-//
-//      Serial.print("[ID:");      Serial.print(DXL_ID);
-//      Serial.print(" GoalPos:"); Serial.print(dxl_goal_position[i]);
-//      Serial.print(" PresPos:");  Serial.print(dxl_present_position);
-//      Serial.println(" ");
-//
-//
-//    }while((abs(dxl_goal_position[i] - dxl_present_position) > DXL_MOVING_STATUS_THRESHOLD));
-
-//    // Change goal position
-//    if (i == 0)
-//    {
-//      i = 1;
-//    }
-//    else
-//    {
-//      i = 0;
-//    }
-//  }
-//
-//  // Disable Dynamixel Torque
-//  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, DXL_ID, ADDR_PRO_TORQUE_ENABLE, TORQUE_DISABLE, &dxl_error);
-//  if (dxl_comm_result != COMM_SUCCESS)
-//  {
-//    packetHandler->getTxRxResult(dxl_comm_result);
-//  }
-//  else if (dxl_error != 0)
-//  {
-//    packetHandler->getRxPacketError(dxl_error);
-//  }
-//
-//  // Close port
-//  portHandler->closePort();
+  if(new_value_check2){
+    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_CURRENT, target_current, &dxl_error);
+    if (dxl_comm_result != COMM_SUCCESS){
+      packetHandler->getTxRxResult(dxl_comm_result);
+    }
+    else if (dxl_error != 0){
+      packetHandler->getRxPacketError(dxl_error);
+    }
+  }
+  new_value_check2=false;
+}
