@@ -15,8 +15,11 @@
 Scheduler Print_Priority;
 Scheduler Control_Priority;
 
-#define BOARD_BUTTON_PIN                16
-#define BOARD_BUTTON_PIN2               17
+#define BOARD_BUTTON_PIN1               15
+#define BOARD_BUTTON_PIN2               16
+#define BOARD_BUTTON_PIN3               17
+
+#define BOARD_LED_PIN                  18
 
 // Control table address (XL320)
 #define ADDR_PRO_TORQUE_ENABLE          64                 // Control table address is different in Dynamixel model
@@ -66,17 +69,26 @@ int i = 0;
 bool new_value_check;
 bool new_value_check2;
 int change_value = 40;
+int toggle = -1;
+
+
+
+// PIN 15: 
+void btn_IQR1(){change_value*=(digitalRead(BOARD_BUTTON_PIN1)==LOW)?toggle:toggle;  
+  
+  new_value_check = false;
+}
 
 // PIN 16: position control
-void btn_IQR(){target_position+=(digitalRead(BOARD_BUTTON_PIN)==HIGH)?change_value:0;  
+void btn_IQR2(){target_position+=(digitalRead(BOARD_BUTTON_PIN2)==HIGH)?change_value:0;  
   if(target_position<0)target_position=0;
   
   new_value_check = true;
 }
 
 // PIN 17: current control
-void btn_IQR2(){target_current+=(digitalRead(BOARD_BUTTON_PIN2)==HIGH)?change_value:0;  
-  if(target_current<0)target_current=0;
+void btn_IQR3(){target_current+=(digitalRead(BOARD_BUTTON_PIN3)==HIGH)?change_value:0;  
+  if(target_current<40)target_current=40;
   
   new_value_check2 = true;
 }
@@ -84,13 +96,13 @@ void btn_IQR2(){target_current+=(digitalRead(BOARD_BUTTON_PIN2)==HIGH)?change_va
 Task Control_Task(1000, TASK_FOREVER, &fControl, &Control_Priority);
 Task Print_Task(100, TASK_FOREVER, &fPrint, &Print_Priority);
 
-int toggle = -1;
-
 void fControl(){
-  input_character = Serial.read();
-  if(input_character == 'c'){
-    change_value = toggle * change_value;
-  }
+ if(change_value>0){
+  digitalWrite(BOARD_LED_PIN,LOW);
+ }
+ else{
+  digitalWrite(BOARD_LED_PIN,HIGH);
+ }
 }
 
 int incomingByte=0;// for incoming serial data
@@ -100,16 +112,21 @@ void fPrint(){
   Serial.print("\tcurrent : ");
   Serial.print(target_current);
   Serial.println("\n");
+  Serial.print("\tchange value: ");
+  Serial.println(change_value);
 }
 
 void setup(){
   int BAUD[4] = {9600,115200,1000000,2000000};
   int BAUDRATE;
-  
-  pinMode(BOARD_BUTTON_PIN, INPUT_PULLDOWN);
-  attachInterrupt(digitalPinToInterrupt(BOARD_BUTTON_PIN),btn_IQR,RISING);
+
+  pinMode(BOARD_LED_PIN, OUTPUT);
+  pinMode(BOARD_BUTTON_PIN1, INPUT_PULLDOWN);
+  attachInterrupt(digitalPinToInterrupt(BOARD_BUTTON_PIN1),btn_IQR1,FALLING);
   pinMode(BOARD_BUTTON_PIN2, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(BOARD_BUTTON_PIN2),btn_IQR2,RISING);
+  pinMode(BOARD_BUTTON_PIN3, INPUT_PULLDOWN);
+  attachInterrupt(digitalPinToInterrupt(BOARD_BUTTON_PIN3),btn_IQR3,RISING);
   // put your setup code here, to run once:
   Serial.begin(115200);
 
@@ -207,6 +224,7 @@ void setup(){
 
 void loop() {
   Print_Priority.execute();
+  
   if(new_value_check){
     dxl_comm_result = packetHandler->write4ByteTxRx(portHandler, DXL_ID, ADDR_PRO_GOAL_POSITION, target_position, &dxl_error);
     if (dxl_comm_result != COMM_SUCCESS){
