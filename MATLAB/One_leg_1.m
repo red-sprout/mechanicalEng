@@ -25,7 +25,7 @@ for t = t_
     pControl = Kp * error;
     integral = integral + error * dt;
     iControl = Ki * integral;
-    dControl = Kd * (error-lastError)/dt;
+    dControl = -Kd * (error-lastError)/dt;
 
     lastError = error;
     pidControl = pControl + iControl + dControl;
